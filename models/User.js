@@ -1,8 +1,15 @@
+const bcrypt = require('bcrypt');
+const { update } = require('lodash');
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/connection');
 
 // create our user model
-class User extends Model {}
+class User extends Model {
+      // set up method to run on instance data (per user) to check password
+    checkPassword(loginPw) {
+        return bcrypt.compareSync(loginPw, this.password);
+    }
+}
 
 // deifne table clomuns and configuration
 User.init(
@@ -34,6 +41,19 @@ User.init(
         }
     },
     {
+        hooks: {
+            //set up beforeCreate lifecycle "hook" functionality
+            async beforeCreate(newUserData) {
+                newUserData.password = await bcrypt.hash(newUserData.password, 10);
+                return newUserData
+            },
+             //set up beforeCreate lifecycle "hook" functionality
+             async beforeUpdate(updatedUserData) {
+                 updatedUserData.password = await bcrypt.hash(updatedUserData.password, 10);
+                 return updatedUserData;
+             }
+
+        },
         sequelize,
         timestamps: false,
         freezeTableName: true,
